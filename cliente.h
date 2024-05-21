@@ -1,18 +1,18 @@
 #ifndef CLIENTE_H
 #define CLIENTE_H
 
-#include<stdio.h>
-#include<stdlib.h>
 
 typedef struct Cliente {
-
     int codCliente;
     char nomeCliente[100];
-    int estadoOcupacao; // true || false
-    int ponteiroProx;
+    int estadoOcupacao; // 1 para ocupado, 0 para livre
+    struct Cliente *proximo; // Ponteiro para o próximo cliente na lista encadeada
+} Cliente;
 
-}Cliente;
+// Funções públicas para manipulação de clientes
+void imprimeCliente(Cliente *cliente);
+Cliente *criarCliente(int codCliente, const char *nomeCliente);
+void inserirCliente(Cliente **lista, Cliente *novoCliente);
+Cliente *buscarCliente(Cliente *lista, int codCliente);
 
-// Perguntar
-
-#endif
+#endif // CLIENTE_H

@@ -37,7 +37,7 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
         case 3:
             printf("Digite o código do cliente que você quer buscar: ");
             scanf("%d", &codCliente);
-            novo = busca(hash, clientes, codCliente);
+            novo = busca(hash, clientes, codCliente, meta);
             if (novo->codCliente == -1) {
                 printf("Cliente não encontrado. Por favor, insira-o na Hash primeiro.\n");
             } else {

@@ -14,8 +14,8 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
     printf("1 - Inserir cliente\n");
     printf("2 - Zerar tabela\n");
     printf("3 - Buscar cliente\n");
-    printf("5 - Mostrar tabela\n");
-    printf("6 - Sair\n");
+    printf("4 - Mostrar tabela\n");
+    printf("5 - Sair\n");
     printf("Sua escolha: ");
     scanf("%d", &escolha);
 
@@ -47,10 +47,10 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
             }
             free(novo);
             break;
-        case 5:
+        case 4:
             mostrarTabela(hash, meta);
             break;
-        case 6:
+        case 5:
             fclose(hash);
             fclose(meta);
             fclose(clientes);

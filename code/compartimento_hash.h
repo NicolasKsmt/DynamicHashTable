@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "clientes.h"
+#include <math.h>
 
 #define TAMANHO_HASH 7
 #define REGISTRO_CLIENTE "clientes.dat"
@@ -29,8 +29,6 @@ Cliente *busca(FILE *tabhash, FILE *clientes, FILE *meta, int codCliente) {
     fread(&p, sizeof(int), 1, meta);
     fread(&l, sizeof(int), 1, meta);
 
-
-    // int = int mod (int)double <-[[int] * [double]]
     posicao = codCliente % (int)(TAMANHO_HASH * pow(2, l));
 
     if (posicao < p) {

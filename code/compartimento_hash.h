@@ -1,104 +1,105 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "clientes.h"
 
 #define TAMANHO_HASH 7
-#define FATOR_CARGA 0.75
 #define REGISTRO_CLIENTE "clientes.dat"
 #define TABELA_HASH "tabHash.dat"
 #define METADADOS "meta.dat"
 
 Cliente *criarCliente(int codigo, char *nome) {
     Cliente *novo = (Cliente *) malloc(sizeof(Cliente));
-    //inicializa espaço de memória com ZEROS
     if (novo) memset(novo, 0, sizeof(Cliente));
-    //copia valores para os campos de novo
+    // copia valores para os campos de novo
     novo->codCliente = codigo;
     strcpy(novo->nomeCliente, nome);
     novo->codCliente = codigo;
-    printf("\n> Novo lcliente criado\n");
+    printf("\n> Novo cliente criado\n");
     return novo;
 }
 
-Cliente *busca(FILE *tabhash, FILE*clientes, FILE*meta, int codCliente){
-    int p, l;
-    Cliente *procurado = (Cliente *)malloc(sizeof(Cliente));
+Cliente *busca(FILE *tabhash, FILE *clientes, FILE *meta, int codCliente) {
+    int qtd, p, l, posicao;
+    Cliente *procurado = (Cliente *) malloc(sizeof(Cliente));
     int validade = 0;
 
-    int posicao = codCliente % TAMANHO_HASH;
-    if(posicao < p){
-        posicao = codCliente % (TAMANHO_HASH)*pow(2, l+1);
+    fread(&qtd, sizeof(int), 1, meta);
+    fread(&p, sizeof(int), 1, meta);
+    fread(&l, sizeof(int), 1, meta);
+
+    posicao = codCliente % (TAMANHO_HASH * pow(2, l));
+
+    if (posicao < p) {
+        posicao = codCliente % (TAMANHO_HASH * pow(2, l + 1));
     }
 
     rewind(tabhash);
-    //printf("Fazendo busca\n");
+    // printf("Fazendo busca\n");
     if (posicao == 0) {
         fread(&posicao, sizeof(int), 1, tabhash);
     } else {
         fseek(tabhash, sizeof(int) * posicao, SEEK_SET);
         fread(&posicao, sizeof(int), 1, tabhash);
-       //printf("li posicao a posicao: %d\n", posicao);
+        // printf("li posicao a posicao: %d\n", posicao);
     }
-    //printf("li a posicao %d \n", posicao);
+    // printf("li a posicao %d \n", posicao);
     if (posicao != -1) {
         while (validade == 0) {
             rewind(clientes);
             fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
 
             fread(&procurado->codCliente, sizeof(int), 1, clientes);
-            //printf("codCliente: %d \n", procurado->codCliente);
+            // printf("codCliente: %d \n", procurado->codCliente);
             fread(procurado->nomeCliente, sizeof(char), sizeof(procurado->nomeCliente), clientes);
-            //printf("nomeCliente: %s \n", procurado->nomeCliente);
+            // printf("nomeCliente: %s \n", procurado->nomeCliente);
             fread(&procurado->estadoOcupacao, sizeof(int), 1, clientes);
-            //printf("estadoOcupacao: %d \n", procurado->estadoOcupacao);
+            // printf("estadoOcupacao: %d \n", procurado->estadoOcupacao);
             fread(&procurado->ponteiroProx, sizeof(int), 1, clientes);
-            //printf("ponteiroProximo: %d \n", procurado->ponteiroProx);
+            // printf("ponteiroProximo: %d \n", procurado->ponteiroProx);
 
             if (procurado->codCliente == codCliente) {
                 validade = 1;
             } else if (procurado->ponteiroProx == -1) {
                 validade = -1;
                 procurado->codCliente = -1;
-               // printf("Busca: Chegamos ao fim da fila \n");
+                // printf("Busca: Chegamos ao fim da fila \n");
             } else {
                 posicao = procurado->ponteiroProx;
             }
         }
         return procurado;
-
     } else {
-       // printf("Não tem ninguem cadastrado \n");
+        // printf("Não tem ninguem cadastrado \n");
         procurado->codCliente = -1;
         return procurado;
     }
 }
 
-void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info){
-    int posicao, contador, valor, p, l;
+void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
+    int posicao, contador, valor, f_carga;
     int validade = 0;
+    int qtd, p, l;
 
-    /*
-    * verificação se o compartimento foi expandido baseado na posicao
-    *   utilizando de base o valor de l do compartimento
-    */
-    rewind(meta);
-    fread(&contador, sizeof(int), 1, meta);
+    fread(&qtd, sizeof(int), 1, meta);
     fread(&p, sizeof(int), 1, meta);
     fread(&l, sizeof(int), 1, meta);
 
-    Cliente *checagem = (Cliente *)malloc(sizeof(Cliente));
-    posicao = info->codCliente % (TAMANHO_HASH)*pow(2, l);
+    Cliente *checagem = (Cliente *) malloc(sizeof(Cliente));
+    posicao = info->codCliente % (TAMANHO_HASH * pow(2, l)); // cuidado ao relacionar int com double
 
-    checagem = busca(tabhash, clientes, info->codCliente, meta);
+    if (posicao < p) {
+        posicao = info->codCliente % (TAMANHO_HASH * pow(2, l + 1));
+    }
+    // printf("Posicao na hash eh %d", posicao);
+
+    checagem = busca(tabhash, clientes, meta, info->codCliente);
     if (checagem->codCliente == info->codCliente) {
         printf("A codCliente escolhida já é cadastrada pelo cliente %s, por favor escolha uma que não esteja em uso \n", checagem->nomeCliente);
         free(checagem);
+        // free(info);
         return;
     }
-
-    // ler o metadados, verificando o contador e fazendo a equação de carga
 
     rewind(tabhash);
     if (posicao != 0) {
@@ -108,29 +109,37 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info){
         fread(&posicao, sizeof(int), 1, tabhash);
     }
 
+    // printf("pos: %d \n", posicao);
     rewind(meta);
 
     fread(&contador, sizeof(int), 1, meta);
+    // printf("Contador %d \n", contador);
     if (posicao != -1) {
-            printf("Hash com dados \n");
+        printf("Hash com dados \n");
         while (validade == 0) {
             rewind(clientes);
             fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
+            // printf("pulo de %d \n", posicao);
             fread(&checagem->codCliente, sizeof(int), 1, clientes);
             fread(checagem->nomeCliente, sizeof(char), sizeof(checagem->nomeCliente), clientes);
+            // printf("nomeCliente na fila: %s \n", checagem->nomeCliente);
             fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
             fread(&checagem->ponteiroProx, sizeof(int), 1, clientes);
+
+            // printf("%d\n", checagem->ponteiroProx);
 
             if (checagem->estadoOcupacao == 0) {
                 validade = 2;
             } else if (checagem->ponteiroProx == -1) {
+                // printf("final da fila encontrado");
                 validade = 1;
                 rewind(clientes);
-                if(posicao != 0){
-                fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
+                if (posicao != 0) {
+                    fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
                 }
                 fread(&checagem->codCliente, sizeof(int), 1, clientes);
                 fread(checagem->nomeCliente, sizeof(char), sizeof(checagem->nomeCliente), clientes);
+                // printf("nomeCliente: %s \n", checagem->nomeCliente);
                 fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
                 fwrite(&contador, sizeof(int), 1, clientes);
             } else {
@@ -162,17 +171,22 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info){
         fread(checagem->nomeCliente, sizeof(char), sizeof(info->nomeCliente), clientes);
         fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
         fread(&checagem->ponteiroProx, sizeof(int), 1, clientes);
+        // printf("codCliente: %d\n", checagem->codCliente);
+        // printf("codCliente: %s\n", checagem->nomeCliente);
         if (validade == 0) { // Não existe cliente naquela hash
             printf("> Aplicando posicao na hash...\n");
             rewind(tabhash);
             posicao = info->codCliente % TAMANHO_HASH;
+            // printf("Na posicao %d, esta escrito: ", posicao);
             fseek(tabhash, sizeof(int) * (posicao), SEEK_SET);
             fwrite(&contador, sizeof(int), 1, tabhash);
             rewind(tabhash);
             fseek(tabhash, sizeof(int) * (posicao), SEEK_SET);
             fread(&valor, sizeof(int), 1, tabhash);
+            // printf("%d \n", valor);
         }
         contador = contador + 1;
+        // printf("contador: %d \n", contador);
         rewind(meta);
         fwrite(&contador, sizeof(int), 1, meta);
         rewind(meta);
@@ -180,43 +194,87 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info){
         printf("> Contador do metadados: %d \n", contador);
         printf("\nCliente cadastrado(a) com sucesso! \n");
     }
-
-    /*
-    * valor arbritrário para a equação de carga, por exemplo 0.75
-    * se a equação de carga for maior, a tabela hash deve ser expandida na posição atual do ponteiro
-    * ponteiros iniciais => p = 0 (), l = 0, sendo p o ponteiro para a posição a ser expandida 
-    *   e l a quantidade de vezes que a tabela foi expandida
-    * 
-    * p será incrementado a cada vez que o compartimento atual for expandido, avançando para o próximo
-    *   compartimento, revisitando os valores no compartimento expandido, verificando se o irá para o
-    *   novo compartimento derivado da expansão ou não
-    */
-
-    int carga_temp = contador % (TAMANHO_HASH)*pow(2, l);
-    if(carga_temp > FATOR_CARGA){
-        printf("Expandindo tabela!\n");
-        rewind(meta);
-        fread(&contador, sizeof(int), 1, meta);
-        fread(&p, sizeof(int), 1, meta);
-        fread(&l, sizeof(int), 1, meta);
+    rewind(meta);
+    fseek(meta, sizeof(int), SEEK_SET);
+    f_carga = contador / (TAMANHO_HASH * pow(2, l));
+    if (f_carga > 0.7) {
         p = p + 1;
-
-        if(p == TAMANHO_HASH){
-            l = l + 1;
-            p = 0;
-        }
-        
-        rewind(meta);
-        fwrite(&contador, sizeof(int), 1, meta);
         fwrite(&p, sizeof(int), 1, meta);
+        expandir(tabhash, meta, clientes);
+    }
+    if (p == TAMANHO_HASH * pow(2, l)) {
+        l = l + 1;
         fwrite(&l, sizeof(int), 1, meta);
-        printf("Tabela expandida com sucesso!\n");
     }
 
     free(checagem);
+    // free(info);
 }
 
-void mostrarTabela(){
+void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
+    int p, l, contador, posicao, valor, validade, pos_hash, flag;
+    int pos_ant, pos_new;
+    Cliente *checagem = (Cliente *) malloc(sizeof(Cliente));
+    Cliente *info = (Cliente *) malloc(sizeof(Cliente));
+    rewind(meta);
+    fwrite(&contador, sizeof(int), 1, meta);
+    fwrite(&p, sizeof(int), 1, meta);
+    fwrite(&l, sizeof(int), 1, meta);
+    valor = 0;
+    pos_new = -1;
+    while (valor < p) {
+        rewind(tabhash);
+        fseek(tabhash, sizeof(int) * valor, SEEK_SET);
+        fread(&posicao, sizeof(int), 1, tabhash);
+        flag = 0;
+
+        if (posicao != -1) {
+            while (validade == 0) {
+                rewind(clientes);
+                fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
+                // printf("pulo de %d \n", posicao);
+                fread(&checagem->codCliente, sizeof(int), 1, clientes);
+                fread(checagem->nomeCliente, sizeof(char), sizeof(checagem->nomeCliente), clientes);
+                // printf("nomeCliente na fila: %s \n", checagem->nomeCliente);
+                fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
+                fread(&checagem->ponteiroProx, sizeof(int), 1, clientes);
+
+                pos_hash = checagem->codCliente / (TAMANHO_HASH * pow(2, l + 1));
+
+                // printf("%d\n", checagem->ponteiroProx);
+
+                if (pos_hash != valor) {
+                    if (flag == 0) {
+                        flag = 1;
+
+                        rewind(tabhash);
+                        fseek(tabhash, sizeof(Cliente) * pos_hash, SEEK_SET);
+                        fwrite(&posicao, sizeof(int), 1, tabhash);
+                    }
+                    pos_new = posicao;
+                    info->codCliente = checagem->codCliente;
+                    info->nomeCliente = checagem->nomeCliente; // Problema com valor nao modificavel
+                    info->estadoOcupacao = checagem->estadoOcupacao;
+                    info->ponteiroProx = checagem->ponteiroProx;
+                } else if (pos_hash == valor) {
+                    if (pos_new != -1) {
+                        rewind(clientes);
+                        fseek(clientes, sizeof(Cliente) * pos_ant, SEEK_SET);
+                        fread(&info->codCliente, sizeof(int), 1, clientes);
+                        fread(info->nomeCliente, sizeof(char), sizeof(info->nomeCliente), clientes);
+                        fread(&info->estadoOcupacao, sizeof(int), 1, clientes);
+                        fwrite(&posicao, sizeof(int), 1, clientes);
+                    }
+                    pos_ant = posicao;
+                }
+                posicao = checagem->ponteiroProx;
+            }
+        }
+    }
+}
+
+// Mostrar o codigo do cliente em forma de estrutura Hash Exterior
+void mostrarTabela() {
     FILE *tabhash;
     int valor;
     if ((tabhash = fopen(TABELA_HASH, "rb")) == NULL) {
@@ -231,12 +289,10 @@ void mostrarTabela(){
     fclose(tabhash);
 }
 
-void zerarTabela(FILE *tabhash, FILE *meta, FILE *clientes){
+void zerarTabela(FILE *tabhash, FILE *meta, FILE *clientes) {
     FILE *nhash;
     FILE *nmeta;
     FILE *nclientes;
-    int p = 0;
-    int l = 0;
     int contador = 0;
     int novo;
     int a = -1;
@@ -255,7 +311,6 @@ void zerarTabela(FILE *tabhash, FILE *meta, FILE *clientes){
         exit(1);
     }
 
-
     for (int i = 0; i < TAMANHO_HASH; i++) {
         fwrite(&a, sizeof(int), 1, nhash);
     }
@@ -265,17 +320,13 @@ void zerarTabela(FILE *tabhash, FILE *meta, FILE *clientes){
         printf("Erro ao abrir o arquivo da tabela clientes\n");
         exit(1);
     }
-    
+
     rewind(nhash);
 
     printf("\n> Arquivo hash zerado\n");
 
     rewind(nmeta);
     fwrite(&contador, sizeof(int), 1, nmeta);
-
-    fwrite(&p, sizeof(int), 1, nmeta);    
-
-    fwrite(&l, sizeof(int), 1, nmeta);
 
     fclose(nmeta);
 
@@ -286,7 +337,7 @@ void zerarTabela(FILE *tabhash, FILE *meta, FILE *clientes){
 
     rewind(nmeta);
 
-    fread(&novo, sizeof(int), 1 ,nmeta);
+    fread(&novo, sizeof(int), 1, nmeta);
     printf("> Contador: %d\n", novo);
     printf("> Tabela Clientes zerada\n");
     printf("Arquivos zerados com sucesso!");
@@ -299,9 +350,4 @@ void zerarTabela(FILE *tabhash, FILE *meta, FILE *clientes){
     fclose(nclientes);
     fclose(nhash);
     fclose(nmeta);
-
-}
-
-void organizarCompartimento() {
-    // Código aqui
 }

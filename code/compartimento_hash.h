@@ -253,7 +253,7 @@ void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
                     }
                     pos_new = posicao;
                     info->codCliente = checagem->codCliente;
-                    info->nomeCliente = checagem->nomeCliente; // Problema com valor nao modificavel
+                    strcpy(info->nomeCliente, checagem->nomeCliente);
                     info->estadoOcupacao = checagem->estadoOcupacao;
                     info->ponteiroProx = checagem->ponteiroProx;
                 } else if (pos_hash == valor) {

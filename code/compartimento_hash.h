@@ -212,8 +212,8 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
 }
 
 void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
-    int p, l, contador, posicao, valor, validade, pos_hash, flag;
-    int pos_ant, pos_new;
+    int p, l, contador, posicao, valor, validade, pos_hash, flag, raiz;
+    int pos_ant, pos_new, consec;
     Cliente *checagem = (Cliente *) malloc(sizeof(Cliente));
     Cliente *info = (Cliente *) malloc(sizeof(Cliente));
     rewind(meta);
@@ -222,12 +222,13 @@ void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
     fwrite(&l, sizeof(int), 1, meta);
     valor = 0;
     pos_new = -1;
+    consec = 0;
     while (valor < p) {
         rewind(tabhash);
         fseek(tabhash, sizeof(int) * valor, SEEK_SET);
         fread(&posicao, sizeof(int), 1, tabhash);
         flag = 0;
-
+        raiz = 0;
         if (posicao != -1) {
             while (validade == 0) {
                 rewind(clientes);
@@ -244,26 +245,39 @@ void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
                 // printf("%d\n", checagem->ponteiroProx);
 
                 if (pos_hash != valor) {
+                    
+                    if(raiz == 0){
+                        // caso o elemento apontado da tabela hash tenha que ser expandido
+                        fseek(tabhash, sizeof(int) * valor, SEEK_SET);
+                        fwrite(&checagem->ponteiroProx, sizeof(int), 1, clientes);
+                    }
                     if (flag == 0) {
+                        // Se o elemento que vai ser expandido for o primeiro;
                         flag = 1;
 
                         rewind(tabhash);
                         fseek(tabhash, sizeof(Cliente) * pos_hash, SEEK_SET);
                         fwrite(&posicao, sizeof(int), 1, tabhash);
                     }
+
+                    rewind(clientes);
+                    fseek(clientes, sizeof(Cliente)* pos_new, SEEK_SET);
+                    fread(&info->codCliente, sizeof(int), 1, clientes);
+                    fread(info->nomeCliente, sizeof(char), sizeof(info->nomeCliente), clientes);
+                    fread(&info->estadoOcupacao, sizeof(int), 1, clientes);
+                    fwrite(&posicao, sizeof(int), 1, clientes);      
                     pos_new = posicao;
-                    info->codCliente = checagem->codCliente;
-                    strcpy(info->nomeCliente, checagem->nomeCliente);
-                    info->estadoOcupacao = checagem->estadoOcupacao;
-                    info->ponteiroProx = checagem->ponteiroProx;
+                    consec = 1;
                 } else if (pos_hash == valor) {
-                    if (pos_new != -1) {
+                    raiz = 1;
+                    if (consec != 0) {
                         rewind(clientes);
                         fseek(clientes, sizeof(Cliente) * pos_ant, SEEK_SET);
                         fread(&info->codCliente, sizeof(int), 1, clientes);
                         fread(info->nomeCliente, sizeof(char), sizeof(info->nomeCliente), clientes);
                         fread(&info->estadoOcupacao, sizeof(int), 1, clientes);
                         fwrite(&posicao, sizeof(int), 1, clientes);
+                        consec = 0;
                     }
                     pos_ant = posicao;
                 }

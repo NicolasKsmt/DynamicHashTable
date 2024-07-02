@@ -10,7 +10,7 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
     Cliente *novo;
 
     // Menu de seleção
-    printf("Selecione uma opção:\n");
+    printf("Selecione uma opcao:\n");
     printf("1 - Inserir cliente\n");
     printf("2 - Zerar tabela\n");
     printf("3 - Buscar cliente\n");
@@ -21,9 +21,9 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
 
     switch (escolha) {
         case 1:
-            printf("Digite o código do cliente que você deseja inserir: ");
+            printf("Digite o codigo do cliente que voce deseja inserir: ");
             scanf("%d", &codCliente);
-            printf("Digite o nome do cliente que você deseja inserir: ");
+            printf("Digite o nome do cliente que voce deseja inserir: ");
             scanf("%s", nomeCliente);
             novo = criarCliente(codCliente, nomeCliente);
             inserir(hash, meta, clientes, novo);
@@ -35,15 +35,15 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
             printf("Tabela zerada com sucesso.\n");
             break;
         case 3:
-            printf("Digite o código do cliente que você quer buscar: ");
+            printf("Digite o codigo a ser buscado: ");
             scanf("%d", &codCliente);
             novo = busca(hash, clientes, meta, codCliente);
             if (novo->codCliente == -1) {
-                printf("Cliente não encontrado. Por favor, insira-o na Hash primeiro.\n");
+                printf("Cliente nao encontrado. Por favor, insira-o na Hash primeiro.\n");
             } else {
-                printf("> Código do cliente: %d\n", novo->codCliente);
+                printf("> Codigo do cliente: %d\n", novo->codCliente);
                 printf("> Nome do cliente: %s\n", novo->nomeCliente);
-                printf("> Próximo cliente dessa faixa se encontra no %d lugar\n", novo->ponteiroProx);
+                printf("> Proximo cliente dessa faixa se encontra no %d lugar\n", novo->ponteiroProx);
             }
             free(novo);
             break;
@@ -58,7 +58,7 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
             exit(0);
             break;
         default:
-            printf("Escolha um dos números do menu\n");
+            printf("Escolha um dos numeros do menu\n");
             break;
     }
 }

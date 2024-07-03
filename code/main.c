@@ -87,8 +87,14 @@ int main() {
         exit(1);
     }
 
-    // Loop para a seleção de ações	
-    selecao(hash, meta, clientes);
+    char continuar = 'y';
+    while (continuar == 'y' || continuar == 'Y') {
+        selecao(hash, meta, clientes);
+
+        // Verificar se a escolha foi sair
+        printf("Deseja continuar? (y/N): ");
+        scanf(" %c", &continuar);
+    }
 
     // Fechar arquivos no final da execução
     fclose(hash);

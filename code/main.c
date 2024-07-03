@@ -10,14 +10,16 @@ void selecao(FILE *hash, FILE *meta, FILE *clientes) {
     Cliente *novo;
 
     // Menu de seleção
-    printf("Selecione uma opcao:\n");
+    printf("\n\nSelecione uma opcao:\n\n");
     printf("1 - Inserir cliente\n");
     printf("2 - Zerar tabela\n");
     printf("3 - Buscar cliente\n");
     printf("4 - Mostrar tabela\n");
     printf("5 - Sair\n");
+    printf("\n");
     printf("Sua escolha: ");
     scanf("%d", &escolha);
+    printf("\n");
 
     switch (escolha) {
         case 1:
@@ -85,15 +87,8 @@ int main() {
         exit(1);
     }
 
-    // Loop para continuar no menu até a escolha 5
-    int continuar = 1;
-    while (continuar) {
-        selecao(hash, meta, clientes);
-
-        // Verificar se a escolha foi sair
-        printf("Deseja continuar? (1 para sim, 0 para nao): ");
-        scanf("%d", &continuar);
-    }
+    // Loop para a seleção de ações	
+    selecao(hash, meta, clientes);
 
     // Fechar arquivos no final da execução
     fclose(hash);

@@ -27,7 +27,7 @@ Cliente *criarCliente(int codigo, char *nome) {
 }
 
 Cliente *busca(FILE *tabhash, FILE *clientes, FILE *meta, int codCliente) {
-    int qtd, p, l, posicao;
+    int qtd, p, l, posicao, mod;
     //printf("entrei na busca\n");
     Cliente *procurado = (Cliente *) malloc(sizeof(Cliente));
     if (!procurado) {
@@ -39,9 +39,11 @@ Cliente *busca(FILE *tabhash, FILE *clientes, FILE *meta, int codCliente) {
     fread(&p, sizeof(int), 1, meta);
     fread(&l, sizeof(int), 1, meta);
 
-    posicao = codCliente % (int)(TAMANHO_HASH * pow(2, l));
+    mod = (int)(TAMANHO_HASH * pow(2, l));
+    posicao = codCliente % mod;
     if (posicao < p) {
-        posicao = codCliente % (int)(TAMANHO_HASH * pow(2, l + 1));
+        mod = (int)(TAMANHO_HASH * pow(2, l + 1));
+        posicao = codCliente % mod;
     }
 
     //printf("entrando no loop\n");
@@ -134,25 +136,28 @@ void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
 }
 
 void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
-    int posicao, contador, valor, f_carga;
+    int posicao, contador, valor, f_carga, mod;
     int validade = 0;
     int qtd, p, l;
 
-    fread(&qtd, sizeof(int), 1, meta);
+    rewind(meta);
+    fread(&contador, sizeof(int), 1, meta);
     fread(&p, sizeof(int), 1, meta);
     fread(&l, sizeof(int), 1, meta);
 
     //printf("ta aqui\n");
+    mod = (int)(TAMANHO_HASH * pow(2, l));
     Cliente *checagem = (Cliente *) malloc(sizeof(Cliente));
-    posicao = info->codCliente % (int)(TAMANHO_HASH * pow(2, l)); // cuidado ao relacionar int com double
+    posicao = info->codCliente %  mod; // cuidado ao relacionar int com double
 
-    //printf("ta aqui 2\n");
+    printf("ta aqui 2\n");
     //ERRO: travou aqui
     //printf("ta aqui 3\n");
 
     if (posicao < p) {
         printf("ta aqui if posicao < p\n");
-        posicao = info->codCliente % (int)(TAMANHO_HASH * pow(2, l + 1));
+        mod =  (int)(TAMANHO_HASH * pow(2, l + 1));
+        posicao = info->codCliente % mod;
         printf("ta aqui tam  %d\n", posicao); // ERRO: ultimo print antes de travar
         
     }
@@ -179,10 +184,8 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
     }
     printf("ta aqui pos fseek\n");
 
-    // printf("pos: %d \n", posicao);
-    rewind(meta);
-
-    fread(&contador, sizeof(int), 1, meta);
+     printf("pos: %d \n", posicao);
+    
     // printf("Contador %d \n", contador);
     if (posicao != -1) {
         printf("Hash com dados \n");
@@ -197,7 +200,8 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
             fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
             fread(&checagem->ponteiroProx, sizeof(int), 1, clientes);
 
-            // printf("%d\n", checagem->ponteiroProx);
+             printf("%d\n", checagem->ponteiroProx);
+             printf("%d\n", posicao);
 
             if (checagem->estadoOcupacao == 0) {
                 validade = 2;
@@ -205,17 +209,23 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
                 // printf("final da fila encontrado");
                 validade = 1;
                 rewind(clientes);
-                if (posicao != 0) {
-                    fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
-                }
+          
+                fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
+                // reescrevendo ponteiro prox, para o final do arquivo
                 fread(&checagem->codCliente, sizeof(int), 1, clientes);
                 fread(checagem->nomeCliente, sizeof(char), sizeof(checagem->nomeCliente), clientes);
                 // printf("nomeCliente: %s \n", checagem->nomeCliente);
                 fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
                 fwrite(&contador, sizeof(int), 1, clientes);
+
+                // lendo o cliente que eu acabei de reescrever
                 rewind(clientes);
-                fseek(clientes, sizeof(Cliente) * contador, SEEK_SET);
-                
+                fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
+                fread(&checagem->codCliente, sizeof(int), 1, clientes);
+                fread(checagem->nomeCliente, sizeof(char), sizeof(checagem->nomeCliente), clientes);
+                // printf("nomeCliente: %s \n", checagem->nomeCliente);
+                fread(&checagem->estadoOcupacao, sizeof(int), 1, clientes);
+                fread(&checagem->ponteiroProx, sizeof(int), 1, clientes);
 
 
                 printf("x codCliente: %d\n", checagem->codCliente);

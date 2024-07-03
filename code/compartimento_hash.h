@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "clientes.h"
 #include <math.h>
+#include "clientes.h"
 
+#define FATOR_CARGA 0.7
 #define TAMANHO_HASH 7
 #define REGISTRO_CLIENTE "clientes.dat"
 #define TABELA_HASH "tabHash.dat"
@@ -11,7 +12,11 @@
 
 Cliente *criarCliente(int codigo, char *nome) {
     Cliente *novo = (Cliente *) malloc(sizeof(Cliente));
-    if (novo) memset(novo, 0, sizeof(Cliente));
+    if (novo == NULL) {
+        fprintf(stderr, "Erro na alocação de memória para novo cliente.\n");
+        return NULL;
+    }
+    memset(novo, 0, sizeof(Cliente));
     // copia valores para os campos de novo
     novo->codCliente = codigo;
     strcpy(novo->nomeCliente, nome);
@@ -162,29 +167,43 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
     fread(&p, sizeof(int), 1, meta);
     fread(&l, sizeof(int), 1, meta);
 
+    printf("ta aqui\n");
     Cliente *checagem = (Cliente *) malloc(sizeof(Cliente));
     posicao = info->codCliente % (int)(TAMANHO_HASH * pow(2, l)); // cuidado ao relacionar int com double
+    printf("ta aqui 2\n");
 
+    //ERRO: travou aqui
+
+    printf("ta aqui 3\n");
     if (posicao < p) {
+        printf("ta aqui if posicao < p\n");
         posicao = info->codCliente % (int)(TAMANHO_HASH * pow(2, l + 1));
+        printf("ta aqui tam\n");
+        
+        //ERRO: travou aqui
     }
     // printf("Posicao na hash eh %d", posicao);
 
     checagem = busca(tabhash, clientes, meta, info->codCliente);
+    printf("ta aqui 3\n");
     if (checagem->codCliente == info->codCliente) {
-        printf("A codCliente escolhida já é cadastrada pelo cliente %s, por favor escolha uma que não esteja em uso \n", checagem->nomeCliente);
+        printf("A codigo escolhido ja e cadastrado pelo cliente %s, por favor escolha uma que nao esteja em uso \n", checagem->nomeCliente);
         free(checagem);
-        // free(info);
+        free(info);
         return;
     }
 
+    printf("ta aqui pre rewind\n");
     rewind(tabhash);
+    printf("ta aqui pos rewind\n");
+
     if (posicao != 0) {
         fseek(tabhash, sizeof(int) * (posicao), SEEK_SET);
         fread(&posicao, sizeof(int), 1, tabhash);
     } else {
         fread(&posicao, sizeof(int), 1, tabhash);
     }
+    printf("ta aqui pos fseek\n");
 
     // printf("pos: %d \n", posicao);
     rewind(meta);
@@ -194,6 +213,7 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
     if (posicao != -1) {
         printf("Hash com dados \n");
         while (validade == 0) {
+            printf("ta aqui no while");
             rewind(clientes);
             fseek(clientes, sizeof(Cliente) * posicao, SEEK_SET);
             // printf("pulo de %d \n", posicao);
@@ -230,7 +250,7 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
             fwrite(&info->codCliente, sizeof(int), 1, clientes);
             fwrite(info->nomeCliente, sizeof(char), sizeof(info->nomeCliente), clientes);
             fwrite(&info->estadoOcupacao, sizeof(int), 1, clientes);
-            printf("Cliente cadastrado com sucesso em uma posição vazia");
+            printf("Cliente cadastrado com sucesso em uma posicao vazia\n");
         }
     }
     rewind(clientes);
@@ -274,7 +294,7 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
     rewind(meta);
     fseek(meta, sizeof(int), SEEK_SET);
     f_carga = contador / (int)(TAMANHO_HASH * pow(2, l));
-    if (f_carga > 0.7) {
+    if (f_carga > FATOR_CARGA) {
         p = p + 1;
         fwrite(&p, sizeof(int), 1, meta);
         expandir(tabhash, meta, clientes);

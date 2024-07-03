@@ -178,14 +178,13 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
     if (posicao < p) {
         printf("ta aqui if posicao < p\n");
         posicao = info->codCliente % (int)(TAMANHO_HASH * pow(2, l + 1));
-        printf("ta aqui tam\n");
+        printf("ta aqui tam\n"); // ERRO: ultimo print antes de travar
         
-        //ERRO: travou aqui
     }
     // printf("Posicao na hash eh %d", posicao);
 
     checagem = busca(tabhash, clientes, meta, info->codCliente);
-    printf("ta aqui 3\n");
+    printf("ta aqui 4\n");
     if (checagem->codCliente == info->codCliente) {
         printf("A codigo escolhido ja e cadastrado pelo cliente %s, por favor escolha uma que nao esteja em uso \n", checagem->nomeCliente);
         free(checagem);

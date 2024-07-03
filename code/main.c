@@ -85,8 +85,15 @@ int main() {
         exit(1);
     }
 
-    // Executar a função de seleção
-    selecao(hash, meta, clientes);
+    // Loop para continuar no menu até a escolha 5
+    int continuar = 1;
+    while (continuar) {
+        selecao(hash, meta, clientes);
+
+        // Verificar se a escolha foi sair
+        printf("Deseja continuar? (1 para sim, 0 para nao): ");
+        scanf("%d", &continuar);
+    }
 
     // Fechar arquivos no final da execução
     fclose(hash);

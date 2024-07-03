@@ -136,7 +136,8 @@ void expandir(FILE *tabhash, FILE *meta, FILE *clientes) {
 }
 
 void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
-    int posicao, contador, valor, f_carga, mod;
+    int posicao, contador, valor, mod;
+    double f_carga;
     int validade = 0;
     int qtd, p, l;
 
@@ -287,10 +288,13 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
     }
     rewind(meta);
     fseek(meta, sizeof(int), SEEK_SET);
-    f_carga = contador / (int)(TAMANHO_HASH * pow(2, l));
+    printf("contador: %d\n", contador);
+    f_carga = (float)contador / (int)(TAMANHO_HASH * pow(2, l) + p);
+    printf("Fator de carga: %f\n", f_carga);
     if (f_carga > FATOR_CARGA) {
         p = p + 1;
         fwrite(&p, sizeof(int), 1, meta);
+        printf("Fator de carga atingido, tabela hash expandida\n");
         expandir(tabhash, meta, clientes);
     }
     if (p == (int)(TAMANHO_HASH * pow(2, l))) {
@@ -305,13 +309,26 @@ void inserir(FILE *tabhash, FILE *meta, FILE *clientes, Cliente *info) {
 // Mostrar o codigo do cliente em forma de estrutura Hash Exterior
 void mostrarTabela() {
     FILE *tabhash;
+    FILE *meta;
     int valor;
+    int contador, p;
+
     if ((tabhash = fopen(TABELA_HASH, "rb")) == NULL) {
         printf("Erro ao abrir o arquivo da tabela hash\n");
         exit(1);
     }
+
+    if ((meta = fopen(METADADOS, "rb")) == NULL) {
+        printf("Erro ao abrir o arquivo METAdados\n");
+        exit(1);
+    }
+    rewind(meta);
     rewind(tabhash);
-    for (int i = 0; i < TAMANHO_HASH; i++) {
+
+    fread(&contador, sizeof(int), 1, meta);
+    fread(&p, sizeof(int), 1, meta);
+
+    for (int i = 0; i < TAMANHO_HASH + p; i++) {
         fread(&valor, sizeof(int), 1, tabhash);
         printf("Posicao %d: %d \n", i, valor);
     }
